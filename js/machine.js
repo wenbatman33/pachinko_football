@@ -2024,7 +2024,18 @@
     home.base = new PIXI.Graphics(); card.addChild(home.base);
     home.mask = new PIXI.Graphics(); card.addChild(home.mask); card.mask = home.mask;   // 內容不超出首頁的範圍（寬螢幕時是圓角）
     // 主視覺：紅黃集中線＋主角揮棒（art_src/home/home_a_bg.png），鋪滿整個首頁
-    if (art) { home.art = new PIXI.Sprite(art); home.art.anchor.set(0.5, 0); card.addChild(home.art); }
+    if (art) {
+      // 瘦長螢幕（手機直立）用的兩層：artBg＝放大鋪滿整個螢幕當底（壓暗）；art＝整張寬度完整放進去、上下緣淡出接到底圖
+      // （2026-11-12 使用者：「手機版主角的踢球被切掉了」——原本只有一層放大鋪滿，左右各被裁掉一截，頭和足球都出畫面）
+      home.artBg = new PIXI.Sprite(art); home.artBg.anchor.set(0.5, 0); home.artBg.tint = 0x8a7078; card.addChild(home.artBg);
+      home.artFull = art;
+      home.artFade = artIm ? texC(artIm.width, artIm.height, (g, w, h) => {
+        g.drawImage(artIm, 0, 0, w, h); g.globalCompositeOperation = 'destination-in';
+        const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(0.1, 'rgba(0,0,0,1)'); gr.addColorStop(0.6, 'rgba(0,0,0,1)'); gr.addColorStop(0.78, 'rgba(0,0,0,0)');
+        g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      }) : art;
+      home.art = new PIXI.Sprite(art); home.art.anchor.set(0.5, 0); card.addChild(home.art);
+    }
     // 下半部壓暗，資訊框和按鈕才跳得出來
     home.shade = new PIXI.Sprite(texC(8, 256, (g) => { const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, 'rgba(70,0,10,0)'); gr.addColorStop(0.42, 'rgba(70,0,10,0.5)'); gr.addColorStop(1, 'rgba(40,0,6,0.88)'); g.fillStyle = gr; g.fillRect(0, 0, 8, 256); })); card.addChild(home.shade);
     // 標誌後面慢慢轉的光芒
@@ -2091,7 +2102,16 @@
     home.base.clear().beginFill(0x1a0306).drawRect(0, top, MW, hh).endFill();
     home.mask.clear().beginFill(0xffffff).drawRoundedRect(0, top, MW, hh, tall ? 0 : 34).endFill();
     home.frame.clear(); if (!tall) home.frame.lineStyle(26, 0x000000, 0.28).drawRoundedRect(-9, -5, MW + 18, MH + 18, 44).lineStyle(12, 0x000000, 0.4).drawRoundedRect(-4, -2, MW + 8, MH + 8, 38).lineStyle(4, 0xffd21f, 0.95).drawRoundedRect(-2, -2, MW + 4, MH + 4, 36);
-    if (home.art) { const a = home.art; a.scale.set(Math.max(MW / a.texture.width, hh / a.texture.height)); a.position.set(MW / 2, top); }   // 鋪滿：瘦長螢幕會把主角放大、左右裁掉一點
+    if (home.art) {
+      const a = home.art, bgA = home.artBg, split = tall && hh > MH * 1.12;   // 明顯比 2:3 瘦長才分兩層
+      bgA.visible = split; a.texture = split ? home.artFade : home.artFull;
+      if (split) {
+        bgA.scale.set(Math.max(MW / bgA.texture.width, hh / bgA.texture.height)); bgA.position.set(MW / 2, top);
+        // 整張寬度放進去；主角的踢球動作（圖高約 38% 處）對到「標誌下緣」與「標語」中間
+        const k = MW / a.texture.width, mid = top + (330 + (hh - 650)) / 2;
+        a.scale.set(k); a.position.set(MW / 2, Math.max(top - a.texture.height * k * 0.08, mid - a.texture.height * k * 0.38));
+      } else { a.scale.set(Math.max(MW / a.texture.width, hh / a.texture.height)); a.position.set(MW / 2, top); }
+    }
     home.shade.width = MW; home.shade.y = HY(750) + home.oy; home.shade.height = top + hh - home.shade.y;
     cover.rays.position.set(HM.logo.x, HT(HM.logo.y));
     if (cover.logo) { const lg = cover.logo; lg.position.set(HM.logo.x, HT(HM.logo.y)); cover.logoS = HM.logo.w / lg.texture.width; lg.scale.set(cover.logoS); }
