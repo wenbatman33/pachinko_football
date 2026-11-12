@@ -1,0 +1,93 @@
+/* 《安平一霸》條漫閱讀頁共用樣式（機台同款：深色底、金紅配色） */
+:root {
+  --bg: #0b0710; --panel-gap: 10px; --col: 760px;
+  --gold1: #fff6c8; --gold2: #f2c44a; --gold3: #b0700f; --red: #e0283c; --ink: #1a0b10;
+  --text: #f4ede6; --dim: #b9aaa4;
+}
+* { box-sizing: border-box; }
+/* 左右方向鎖住：斜斜的狀聲詞會故意凸出畫格邊緣，在手機上會把整頁撐得比螢幕寬，上下滑的時候畫面就跟著左右晃。
+   凸出去的部分直接裁掉、頁面只允許上下滑（保留兩指縮放，方便放大看畫面） */
+html { scroll-behavior: smooth; overflow-x: hidden; }
+body {
+  overflow-x: hidden; overflow-x: clip; touch-action: pan-y pinch-zoom; overscroll-behavior-x: none;
+  margin: 0; color: var(--text); font-family: "Noto Sans SC", "PingFang SC", sans-serif; line-height: 1.6;
+  background: var(--bg) radial-gradient(ellipse at 50% -10%, #3a0a18 0%, transparent 60%) no-repeat;
+}
+.progress { position: fixed; left: 0; top: 0; height: 4px; width: 0; z-index: 50; background: linear-gradient(90deg, var(--red), var(--gold2)); box-shadow: 0 0 10px var(--gold2); }
+.col { max-width: var(--col); margin: 0 auto; }
+@media (max-width: 760px) { .col { overflow-x: hidden; overflow-x: clip; } }   /* 手機上欄寬就是螢幕寬：凸出去的狀聲詞在欄位邊緣裁掉 */
+
+/* 封面 */
+.cover { position: relative; overflow: hidden; }
+.cover img { display: block; width: 100%; height: auto; }
+.cover .titles { position: absolute; left: 0; right: 0; top: 0; padding: 7% 6% 14%; text-align: center;
+  background: linear-gradient(180deg, rgba(8,4,12,.82) 0%, rgba(8,4,12,.45) 60%, transparent 100%); }
+/* 標題一律用繁中的 Noto Sans SC 最粗體：原本的日文展示字型（Dela Gothic One）太粗，「霸」這種筆畫多的字會整個糊成一塊 */
+.series { font-family: "Noto Sans SC", sans-serif; font-weight: 900; font-size: clamp(30px, 8vw, 64px); letter-spacing: .12em; line-height: 1.15;
+  background: linear-gradient(180deg, var(--gold1), var(--gold2) 50%, var(--gold3)); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 3px 0 #5a0010) drop-shadow(0 0 18px rgba(242,196,74,.45)); }
+.chno { margin-top: 10px; display: inline-block; padding: 2px 14px; border: 2px solid var(--gold2); border-radius: 999px; color: var(--gold2); font-weight: 900; letter-spacing: .2em; font-size: clamp(13px, 3vw, 17px); background: rgba(0,0,0,.35); }
+.chtitle { margin-top: 8px; font-family: "Noto Sans SC", sans-serif; font-weight: 900; font-size: clamp(24px, 6.2vw, 46px); color: #fff;
+  text-shadow: 0 0 2px #000, 0 3px 0 var(--red), 0 0 22px rgba(224,40,60,.8); }
+
+/* 分格 */
+.panel { position: relative; margin: var(--panel-gap) 0; }
+.panel img { display: block; width: 100%; height: auto; background: #1c1220; }
+.panel.tall img { width: 100%; }
+
+/* 狀聲詞 */
+/* 狀聲詞用思源黑體最粗：筆畫多的字（轟、鏘）用更粗的字型加描邊會糊成一塊 */
+.sfx { position: absolute; transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) skewX(-8deg); pointer-events: none; white-space: nowrap;
+  font-family: "Noto Sans SC", sans-serif; font-weight: 900; font-size: calc(clamp(28px, 8vw, 62px) * var(--k, 1)); line-height: 1; letter-spacing: -.02em;
+  color: #fff3b0; -webkit-text-stroke: .055em #6a0010; paint-order: stroke fill;
+  text-shadow: 0 .05em 0 #6a0010, 0 0 .35em rgba(255,200,60,.9); }
+
+/* 對白區（分格之間） */
+.talk { padding: 6px 16px; display: flex; flex-direction: column; gap: 12px; }
+.talk.before { padding-top: 18px; }
+.talk.after { padding-bottom: 18px; }
+.line { display: flex; flex-direction: column; max-width: 84%; }
+.line.l { align-self: flex-start; align-items: flex-start; }
+.line.r { align-self: flex-end; align-items: flex-end; }
+.line.c { align-self: center; align-items: center; }
+.who { font-size: 12.5px; font-weight: 900; letter-spacing: .08em; margin: 0 14px 4px; color: var(--c, var(--gold2)); }
+.bubble { position: relative; padding: 11px 18px; border-radius: 22px; font-size: clamp(16px, 4.2vw, 19px); font-weight: 700; color: var(--ink); background: #fff;
+  box-shadow: 0 3px 0 rgba(0,0,0,.35); border: 3px solid var(--ink); }
+/* 尾巴：after＝指向上一格；before＝指向下一格 */
+.bubble::after { content: ""; position: absolute; width: 18px; height: 18px; background: inherit; border: inherit; border-width: 3px 0 0 3px; }
+.after .bubble::after { top: -11px; transform: rotate(45deg); }
+.before .bubble::after { bottom: -11px; transform: rotate(225deg); }
+.l .bubble::after { left: 26px; } .r .bubble::after { right: 26px; } .c .bubble::after { left: calc(50% - 9px); }
+
+/* 大喊：金黃底、紅色粗框、略為傾斜 */
+.shout .bubble { background: #fff6c8; border-color: var(--red); border-width: 4px; font-size: clamp(18px, 5vw, 23px); font-weight: 900; border-radius: 12px; transform: rotate(-1.2deg);
+  box-shadow: 0 4px 0 #6a0010, 0 0 18px rgba(242,196,74,.55); }
+.shout.r .bubble { transform: rotate(1.2deg); }
+/* 內心話：淡紫、虛線 */
+.think .bubble { background: #efe7ff; border-style: dashed; border-color: #5b4a8a; color: #2a1d4a; font-weight: 500; border-radius: 30px; }
+.think .bubble::after { display: none; }
+.think .bubble::before { content: ""; position: absolute; width: 10px; height: 10px; border-radius: 50%; background: #efe7ff; border: 2px dashed #5b4a8a; }
+.after.think .bubble::before, .after .think .bubble::before { top: -16px; left: 30px; }
+.before .think .bubble::before { bottom: -16px; left: 30px; }
+.r.think .bubble::before { left: auto; right: 30px; }
+
+/* 旁白：深色方框、金色邊 */
+.nar { align-self: stretch; max-width: 100%; }
+.nar .box { padding: 10px 16px; background: linear-gradient(90deg, rgba(40,14,30,.95), rgba(20,8,20,.95)); border-left: 4px solid var(--gold2); border-radius: 4px;
+  color: #f6ecd8; font-size: clamp(15px, 4vw, 17.5px); letter-spacing: .03em; box-shadow: 0 2px 10px rgba(0,0,0,.4); }
+
+/* 結尾 */
+.end { text-align: center; padding: 40px 16px 30px; }
+.end .done { font-family: "Noto Sans SC", sans-serif; font-weight: 900; font-size: clamp(30px, 8vw, 54px);
+  background: linear-gradient(180deg, var(--gold1), var(--gold2) 50%, var(--gold3)); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 3px 0 #5a0010); }
+.next { margin: 26px auto 0; max-width: 520px; padding: 18px 20px; border-radius: 16px; border: 1px solid #4a2a35;
+  background: linear-gradient(135deg, #2a0f1c, #160a14); }
+.next .lbl { font-size: 13px; color: var(--dim); letter-spacing: .2em; }
+.next .t { font-size: 21px; font-weight: 900; margin-top: 4px; }
+.next .lock { margin-top: 10px; font-size: 14px; color: var(--gold2); }
+a.next { display: block; text-decoration: none; color: var(--text); }
+a.next:hover { border-color: var(--gold2); }
+.tolib { display: inline-block; margin-top: 22px; color: var(--dim); text-decoration: none; font-size: 15px; }
+.tolib:hover { color: var(--gold2); }
+.foot { text-align: center; color: #6e5f66; font-size: 12.5px; padding: 30px 16px 60px; }

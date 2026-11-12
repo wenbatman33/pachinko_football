@@ -1,0 +1,33 @@
+# 原始素材與備份（體積大，只留在本機）
+art_src/
+_backup/
+manga/raw/
+.cache/
+.claude/
+
+# 系統與暫存
+.DS_Store
+__pycache__/
+node_modules/
+.wrangler/
+
+# 生圖／生音的執行紀錄與記號檔
+tools/*.out
+tools/*.log
+tools/.ch01_kit_done
+manga/*.out
+
+# 試聽用的候選音檔（定案的已經在 assets/audio/bgm、voice 裡）
+assets/audio/bgm_candidates/
+assets/audio/voice_samples/
+
+# 漫畫：亂碼網址用的密鑰、分鏡腳本與故事大綱等原始資料只留在本機（整個 repo 會原樣放上公開的網站，
+# 放進來等於把每一話的劇情和內容公開）。審稿用的預覽頁沒有解鎖保護，也不可以進版
+tools/.manga_salt
+tools/manga_src/
+manga/data/
+manga/preview/
+manga/story_bible.md
+manga/manifest_*.json
+# 註：manga/ch01～ch05.html 是「佔位頁」（只會轉回遊戲首頁），要進版。
+# 真正的漫畫頁在 manga/r/<亂碼>.html，由 tools/build_manga.py 產生；不要把有內容的頁面放回這幾個檔名

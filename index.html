@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#050308">
+<!-- 加到手機主畫面（PWA）：圖示、名稱、全螢幕開啟 -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/pwa/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/pwa/icon-192.png">
+<link rel="apple-touch-icon" href="assets/pwa/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PK大逆转">
+<title>PK大逆转</title>
+<!-- 分享連結時的預覽（FB、LINE、IG 訊息、X 都抓這幾行）。圖片一定要寫完整網址；分享圖在 assets/share/，改圖之後把網址後面的 ?v= 數字加一，各平台才會重抓。
+     og:url 故意不寫：兩個線上網址（workers.dev、pages.dev）各自分享各自的連結 -->
+<meta name="description" content="从防波堤，踢到世界杯。足球弹珠机 × 五话原创漫画《PK大逆转》，赢珠子就能解锁下一话，免费游玩。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PK大逆转">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:title" content="PK大逆转｜足球弹珠机 × 五话原创漫画">
+<meta property="og:description" content="从防波堤，踢到世界杯。赢珠子就能解锁下一话，免费游玩。">
+<!-- 上線後填入完整網址：<meta property="og:image" content="https://（正式網址）/assets/share/og-1200x630.jpg?v=1"> -->
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="PK大逆转：主角陆远全力射门，足球弹珠机 × 五话原创漫画">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PK大逆转｜足球弹珠机 × 五话原创漫画">
+<meta name="twitter:description" content="从防波堤，踢到世界杯。赢珠子就能解锁下一话，免费游玩。">
+<!-- 上線後填入完整網址：<meta name="twitter:image" content="https://（正式網址）/assets/share/og-1200x630.jpg?v=1"> -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@700;900&family=Dela+Gothic+One&family=M+PLUS+1p:wght@800;900&display=swap" rel="stylesheet">
+<!-- 載入畫面要用的兩張圖最先下載（也是首頁的圖，不會多載） -->
+<link rel="preload" as="image" href="assets/img/home_bg.webp" fetchpriority="high">
+<link rel="preload" as="image" href="assets/img/logo.webp">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app"></div>
+<!-- 載入畫面：首頁的主視覺與標誌（位置跟首頁一樣，載完直接淡出接上首頁）＋漫畫風進度條。樣式在 css/style.css -->
+<div id="loading">
+  <div class="ld-card">
+    <img class="ld-art" src="assets/img/home_bg.webp" alt="" onload="this.classList.add('on')">
+    <div class="ld-shade"></div>
+    <div class="ld-rays"></div>
+    <img class="ld-logo" src="assets/img/logo.webp" alt="PK大逆转" onload="this.classList.add('on')">
+    <div class="ld-box">
+      <div class="ld-text"><span>加载中</span><b id="loadPct">0%</b></div>
+      <div class="load-track"><div id="loadBar"><i class="ld-ball"></i></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- DEV 開發者微調工具（D 鍵或右下角齒輪） -->
+<button id="devToggle" title="DEV (D)">⚙</button>
+<div id="devPanel">
+  <div class="dev-head">DEV 微调工具 <button id="devClose">✕</button></div>
+  <div id="devTabs"></div>
+  <div id="devBody"></div>
+</div>
+
+<!-- 正式版（2026-11-10 起）：真實比例物理（js/v2/）＋新樣式的機台。舊版保留在 classic.html。
+     正式版用自己的存檔（鍵名前面加 v2_），不會動到舊版的珠數、手把位置與開發工具微調；漫畫進度與音量兩版共用 -->
+<script>
+(function () {
+  var SP = Storage.prototype, g = SP.getItem, s = SP.setItem, r = SP.removeItem;
+  function k(n) { return /^pk_/.test(n) && n !== 'pk_manga' && n !== 'pk_volume' && n !== 'pk_muted' ? 'v2_' + n : n; }
+  SP.getItem = function (n) { return g.call(this, k(n)); };
+  SP.setItem = function (n, v) { return s.call(this, k(n), v); };
+  SP.removeItem = function (n) { return r.call(this, k(n)); };
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.4.2/pixi.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/v2/config2.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/assets.js"></script>
+<script src="js/v2/gauge2.js"></script>
+<script src="js/v2/physics2.js"></script>
+<script src="js/scripts.js"></script>
+<script src="js/lcd.js"></script>
+<script src="js/game.js"></script>
+<script src="js/director.js"></script>
+<script src="js/dev.js"></script>
+<script src="js/manga.js"></script>
+<script src="js/duel_art.js"></script>
+<script src="js/duel.js"></script>
+<script src="js/machine.js"></script>
+</body>
+</html>

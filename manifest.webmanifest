@@ -1,0 +1,17 @@
+{
+  "name": "PK大逆转",
+  "short_name": "PK大逆转",
+  "description": "足球弹珠机：边打边收集五话原创漫画《PK大逆转》。模拟娱乐，没有任何真实金钱输赢或兑换。",
+  "lang": "zh-Hans",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#12060a",
+  "theme_color": "#12060a",
+  "icons": [
+    { "src": "assets/pwa/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/pwa/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/pwa/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

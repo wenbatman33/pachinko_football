@@ -1,0 +1,192 @@
+/* P PK大逆转 — 全畫面 3D，只保留載入條與 DEV 面板樣式 */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: #07040c; overflow: hidden; color: #eee; font-family: "M PLUS 1p", "Hiragino Sans", sans-serif; }
+body { user-select: none; -webkit-user-select: none; touch-action: none; }
+#app { position: fixed; inset: 0; }
+#app canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+button { font-family: inherit; color: inherit; cursor: pointer; }
+
+/* ---------- 載入畫面 ----------
+ * 就是首頁的主視覺與標誌，擺在跟首頁一樣的位置（js/machine.js 的 layoutHome），載完直接淡出接上首頁；
+ * 下面是漫畫風進度條，前端一顆足球滾著前進。（使用者 2026-11-10：「loading 也應該幫我添加畫面吧，一個進度條十分單調」）
+ * --u＝機台座標的 1 單位是幾個畫素（機台寬 1000、高 1500，跟 fit() 的縮放同一個算法）
+ * --ld-*＝進度條的位置與大小，預設值要跟 js/config.js 的 PK.HOME.load 一樣（開發工具「🏠 首頁」可調）
+ */
+:root { --u: min(0.1vw, 0.0666667vh); --ld-y: 1290; --ld-w: 800; --ld-h: 54; --ld-size: 54; }
+@supports (height: 1dvh) { :root { --u: min(0.1vw, 0.0666667dvh); } }
+#loading { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #14020a; transition: opacity .45s ease; }
+#loading.done { opacity: 0; pointer-events: none; }
+/* 寬螢幕：封面兩旁鋪失焦壓暗的主視覺（跟首頁一樣） */
+#loading::before { content: ''; position: absolute; inset: -90px; background: #8a1622 url(../assets/img/home_bg.webp) center / cover no-repeat; background-blend-mode: multiply; filter: blur(46px) brightness(.55); }
+.ld-card { position: relative; flex: none; width: calc(1000 * var(--u)); height: calc(1500 * var(--u)); overflow: hidden; border-radius: calc(34 * var(--u));
+  background: radial-gradient(ellipse at 50% 40%, #ffd23f 0%, #f2531c 30%, #b50a1a 58%, #3a0408 100%);   /* 主視覺還沒載到之前先有紅黃的底，不是一片黑 */
+  box-shadow: 0 0 0 calc(4 * var(--u)) #ffd21f, 0 0 0 calc(10 * var(--u)) rgba(0,0,0,.4), 0 0 calc(30 * var(--u)) calc(16 * var(--u)) rgba(0,0,0,.3); }
+.ld-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; opacity: 0; transition: opacity .35s; }
+.ld-shade { position: absolute; left: 0; right: 0; bottom: 0; height: calc(750 * var(--u)); background: linear-gradient(180deg, rgba(70,0,10,0) 0%, rgba(70,0,10,.5) 42%, rgba(40,0,6,.88) 100%); }
+.ld-rays { position: absolute; left: 50%; top: calc(166 * var(--u)); width: calc(1440 * var(--u)); height: calc(1440 * var(--u)); margin: calc(-720 * var(--u)) 0 0 calc(-720 * var(--u));
+  background: repeating-conic-gradient(rgba(255,236,150,.2) 0 5deg, rgba(255,255,255,0) 5deg 15deg); -webkit-mask-image: radial-gradient(closest-side, #000 8%, transparent 100%); mask-image: radial-gradient(closest-side, #000 8%, transparent 100%);
+  mix-blend-mode: screen; animation: ldSpin 31.4s linear infinite; }
+.ld-logo { position: absolute; left: 50%; top: calc(166 * var(--u)); width: calc(730 * var(--u)); height: auto; transform: translate(-50%, -50%); opacity: 0; transition: opacity .3s; animation: ldBreath 2s ease-in-out infinite; }
+.ld-art.on, .ld-logo.on { opacity: 1; }
+/* 進度條：白底粗墨線＋疊影（跟首頁漫畫櫃的框同一套），中心在 --ld-y */
+.ld-box { position: absolute; left: 50%; bottom: calc((1500 - var(--ld-y)) * var(--u)); width: calc(var(--ld-w) * var(--u)); transform: translate(-50%, 50%); }
+.ld-text { position: absolute; left: 0; right: 0; bottom: 100%; margin-bottom: calc(20 * var(--u)); display: flex; justify-content: space-between; align-items: flex-end;
+  font: 900 calc(var(--ld-size) * var(--u)) / 1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; letter-spacing: .08em; color: #fff; transform: skewX(-8deg);
+  text-shadow: calc(3 * var(--u)) 0 #120003, calc(-3 * var(--u)) 0 #120003, 0 calc(3 * var(--u)) #120003, 0 calc(-3 * var(--u)) #120003,
+    calc(2.2 * var(--u)) calc(2.2 * var(--u)) #120003, calc(-2.2 * var(--u)) calc(2.2 * var(--u)) #120003, calc(2.2 * var(--u)) calc(-2.2 * var(--u)) #120003, calc(-2.2 * var(--u)) calc(-2.2 * var(--u)) #120003,
+    calc(5 * var(--u)) calc(7 * var(--u)) 0 #120003; }
+.ld-text b { color: #ffe14a; font-weight: 900; font-size: 1.18em; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.load-track { position: relative; height: calc(var(--ld-h) * var(--u)); background: #fff; border: calc(6 * var(--u)) solid #120003; box-shadow: calc(9 * var(--u)) calc(10 * var(--u)) 0 rgba(18,0,3,.85); }
+#loadBar { position: relative; height: 100%; width: 0; transition: width .3s ease-out;
+  background: repeating-linear-gradient(-60deg, rgba(255,255,255,.36) 0 calc(9 * var(--u)), rgba(255,255,255,0) calc(9 * var(--u)) calc(24 * var(--u))), linear-gradient(90deg, #ffd21f, #ff8a00 55%, #e60023); }
+/* 進度條前端的足球：底下一圈墨色疊影不轉，球本身一直滾 */
+.ld-ball { --b: calc(var(--ld-h) * 1.9 * var(--u)); position: absolute; right: 0; top: 50%; width: var(--b); height: var(--b); margin: calc(var(--b) / -2) calc(var(--b) / -2) 0 0; }
+.ld-ball::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: rgba(18,0,3,.85); transform: translate(calc(5 * var(--u)), calc(7 * var(--u))); }
+.ld-ball::after { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23fff' stroke='%23120003' stroke-width='7'/%3E%3Cg fill='%23120003'%3E%3Cpath d='M50 32l17 12-6 20H39l-6-20z'/%3E%3Cpath d='M50 6l12 8-12 9-12-9zM93 40l-3 15-13-6 2-15zM78 86l-14 5-4-14 14-9zM22 86l-10-18 14 9-4 14zM7 40l14-6 2 15-13 6z'/%3E%3C/g%3E%3Cg stroke='%23120003' stroke-width='4'%3E%3Cpath d='M50 23v9M77 49l-10-5M64 77l-3-13M36 77l3-13M23 49l10-5'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat; animation: ldSpin .9s linear infinite; }
+@keyframes ldSpin { to { transform: rotate(360deg); } }
+@keyframes ldBreath { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.02); } }
+/* 比 2:3 瘦長的螢幕（手機直立）：鋪滿整個螢幕，標誌貼上緣、進度條貼下緣，避開瀏海與底部橫條 */
+@media (max-aspect-ratio: 2/3) {
+  #loading::before { display: none; }
+  .ld-card { width: 100%; height: 100%; border-radius: 0; box-shadow: none; }
+  .ld-logo, .ld-rays { top: calc(166 * var(--u) + env(safe-area-inset-top, 0px)); }
+  .ld-box { bottom: calc((1500 - var(--ld-y)) * var(--u) + env(safe-area-inset-bottom, 0px)); }
+}
+/* 開發工具預覽載入畫面時，寬螢幕讓出右邊的面板 */
+@media (min-width: 761px) { body.dev-open #loading { right: 360px; } }
+@media (prefers-reduced-motion: reduce) { .ld-rays, .ld-logo, .ld-ball::after { animation: none; } }
+
+/* DEV */
+#devToggle { position: fixed; right: 10px; bottom: 10px; width: 42px; height: 42px; border-radius: 50%; border: 1px solid #666; background: rgba(20,20,30,.75); font-size: 20px; z-index: 70; opacity: .7; }
+#devToggle:hover { opacity: 1; }
+html:not(.pk-dev) #devToggle, html:not(.pk-dev) #devPanel { display: none !important; }   /* 上線版：載入中也不露出齒輪 */
+#devPanel { position: fixed; top: 0; right: 0; bottom: 0; width: 360px; max-width: 100vw; background: rgba(12,10,20,.94); border-left: 1px solid #444; z-index: 80;
+  transform: translateX(100%); transition: transform .25s; display: flex; flex-direction: column; font-size: 12px; }
+#devPanel.open { transform: none; }
+.dev-head { padding: 10px 12px; font-weight: 900; display: flex; justify-content: space-between; border-bottom: 1px solid #333; color: #3bff6e; }
+.dev-head button { background: none; border: 0; font-size: 18px; }
+#devTabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px; border-bottom: 1px solid #333; }
+#devTabs button { border: 1px solid #444; background: #1a1a26; border-radius: 6px; padding: 4px 8px; font-size: 12px; font-weight: 800; }
+#devTabs button.on { background: #3bff6e; color: #000; }
+#devBody { overflow: auto; padding: 8px 12px 40px; flex: 1; }
+.dev-row { display: grid; grid-template-columns: 112px 1fr 64px; gap: 6px; align-items: center; margin: 3px 0; }
+.dev-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ccc; }
+.dev-row input[type=number] { width: 64px; background: #000; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 2px 4px; }
+.dev-row input[type=color] { grid-column: 2 / 4; height: 24px; background: none; border: 0; }
+.dev-group { margin: 12px 0 4px; font-weight: 900; color: #ffd23f; border-bottom: 1px solid #333; padding-bottom: 2px; }
+/* 可以收合的一組滑桿（首頁版面） */
+.dev-fold { margin: 6px 0; }
+.dev-fold summary { cursor: pointer; color: #9fdcff; font-weight: 700; padding: 4px 0; }
+.dev-note { color: #9fe6ff; line-height: 1.5; margin: 4px 0 8px; }
+.dev-btns { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0; }
+.dev-btns button { border: 1px solid #555; background: #22222e; border-radius: 6px; padding: 5px 8px; font-size: 12px; font-weight: 800; }
+.dev-btns button:active { background: #555; }
+.dev-big { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.dev-big button { padding: 12px 6px; font-size: 14px; }
+.dev-big button.wide { grid-column: 1 / 3; }
+/* 聲音狀態顯示（開發工具／?audio=1）：左上角小字，蓋在漫畫閱讀器上面也看得到，不擋操作 */
+#audioHud { position: fixed; left: 6px; top: calc(var(--sat) + 4px); z-index: 95; max-width: calc(100vw - 12px); box-sizing: border-box; padding: 5px 8px; border-radius: 6px; background: rgba(0,0,0,.8); color: #9dffb0; font: 700 11px/1.45 ui-monospace, Menlo, Consolas, "Noto Sans TC", monospace; white-space: pre-wrap; pointer-events: none; }
+.dev-status { margin: 6px 0 2px; padding: 8px 10px; border-radius: 6px; background: #1d2a1d; color: #3bff6e; font-weight: 900; font-size: 13px; }
+.dev-btns button.primary { background: #3bff6e; color: #000; border-color: #3bff6e; }
+.dev-export { width: 100%; height: 300px; background: #000; color: #9f9; font-family: ui-monospace, monospace; font-size: 11px; border: 1px solid #333; border-radius: 6px; }
+@media (max-width: 760px) {
+  #devPanel { top: auto; height: 55vh; width: 100%; border-left: 0; border-top: 1px solid #444; transform: translateY(100%); }
+  #devPanel.open { transform: none; }
+}
+
+/* ===== 漫畫櫃與閱讀器（js/manga.js，疊在機台上） =====
+ * 手機 app 的排法：操作放底部（拇指按得到），所有東西避開狀態列／瀏海（--sat）與底部橫條（--sab）。
+ * 加到手機主畫面之後網頁會畫到狀態列底下，原本放在最上面的返回、關閉鈕剛好被蓋住按不到（使用者 2026-11-11）。
+ * 測試時在 <html> 上設 --sat、--sab 就能模擬手機的瀏海 */
+:root { --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px); --sar: env(safe-area-inset-right, 0px); }
+body.mg-open #devToggle { display: none; }
+.mg-overlay { position: fixed; inset: 0; z-index: 90; background: #0b0710; color: #f4ede6; font-family: "Noto Sans SC", "PingFang SC", "M PLUS 1p", sans-serif; }
+.mg-cabinet { overflow-y: auto; overflow-x: hidden; touch-action: pan-y; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: var(--sat) 16px calc(40px + var(--sab));   /* 只能上下滑，左右鎖住 */
+  background: #0b0710 radial-gradient(ellipse at 50% -10%, #4a0c18 0%, transparent 60%) no-repeat; }
+.mg-head { text-align: center; padding: 58px 0 18px; }
+.mg-title { font-family: "Noto Sans SC", sans-serif; font-weight: 900; font-size: clamp(38px, 9vw, 64px); letter-spacing: .14em; line-height: 1.15;   /* 繁中粗體：日文展示字型太粗，「畫」「櫃」「霸」會糊掉 */
+  background: linear-gradient(180deg, #fff6c8, #f2c44a 50%, #b0700f); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 3px 0 #5a0010) drop-shadow(0 0 18px rgba(242,196,74,.4)); }
+.mg-sub { color: #b9aaa4; font-size: 14px; margin-top: 6px; }
+.mg-stat { display: inline-block; margin-top: 14px; padding: 6px 16px; border: 1px solid #6a4a2a; border-radius: 999px; background: rgba(0,0,0,.35); font-size: 15px; color: #e8dcc8; }
+.mg-stat b { color: #ffd23f; }
+.mg-x { position: fixed; top: calc(var(--sat) + 8px); left: 12px; z-index: 2; height: 44px; padding: 0 16px 0 12px; border-radius: 22px; border: 2px solid #c9952e; background: #2a0610; color: #ffe9a8; font: 900 16px/1 "Noto Sans SC", "PingFang SC", sans-serif; cursor: pointer; }   /* 左上角「‹ 返回」：手機 app 慣用的位置，避開狀態列 */
+.mg-grid { max-width: 980px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.mg-card { display: block; text-align: left; padding: 0; font: inherit; color: inherit; background: #1a1220; border: 1px solid #3a2a35; border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform .15s, border-color .15s; }
+button.mg-card:hover { transform: translateY(-3px); border-color: #f2c44a; }
+.mg-card.locked { cursor: default; }
+.mg-pic { position: relative; aspect-ratio: 2 / 3; background: #241826; overflow: hidden; }
+.mg-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.mg-card.locked .mg-pic img { filter: blur(10px) brightness(.35) saturate(.6); transform: scale(1.1); }
+.mg-lock { position: absolute; inset: 0; display: grid; place-items: center; font-size: 42px; text-shadow: 0 2px 8px #000; }
+.mg-new { position: absolute; top: 8px; left: 8px; padding: 1px 9px; border-radius: 6px; background: #e0283c; color: #fff; font-weight: 900; font-size: 13px; letter-spacing: .1em; box-shadow: 0 0 10px rgba(224,40,60,.8); }
+.mg-body { padding: 9px 11px 12px; }
+.mg-no { font-size: 12px; color: #f2c44a; font-weight: 900; letter-spacing: .15em; }
+.mg-t { font-weight: 900; font-size: 15px; margin-top: 2px; line-height: 1.35; }
+.mg-ach { font-size: 12px; color: #d9b98a; margin-top: 5px; }
+.mg-go { margin-top: 8px; font-size: 13px; color: #ffd23f; font-weight: 700; }
+.mg-need { margin-top: 8px; font-size: 12px; color: #b9aaa4; }
+.mg-bar { margin-top: 5px; height: 6px; border-radius: 3px; background: #2e2230; overflow: hidden; }
+.mg-bar i { display: block; height: 100%; background: linear-gradient(90deg, #e0283c, #f2c44a); }
+.mg-left { margin-top: 4px; font-size: 12px; color: #8e7f86; }
+.mg-foot { max-width: 980px; margin: 22px auto 0; text-align: center; color: #6e5f66; font-size: 12.5px; }
+.mg-reader { display: flex; flex-direction: column; padding-top: var(--sat); }
+/* 閱讀器底部工具列：關閉｜上一話｜第 N 話（開話數清單）｜下一話｜邊玩邊看。每顆至少 48px 高 */
+.mg-tool { flex: none; display: grid; grid-template-columns: 1fr 1fr 1.9fr 1fr 1fr; gap: 4px; padding: 5px 6px calc(5px + var(--sab)); background: #160a14; border-top: 1px solid #3a2a35; }
+.mg-tb { min-width: 0; min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 2px 4px; border: 0; border-radius: 10px; background: transparent; color: #ffe9a8; font: inherit; cursor: pointer; }
+.mg-tb b { font-size: 21px; line-height: 1; font-weight: 900; }
+.mg-tb span { max-width: 100%; font-size: 11px; line-height: 1.15; font-weight: 700; color: #c9b8a8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mg-tb:active { background: rgba(255,255,255,.12); }
+.mg-tb[disabled] { opacity: .3; cursor: default; }
+.mg-tb.locked b { font-size: 17px; }
+.mg-tb.mg-pick { border: 1px solid #c9952e; background: #2a0610; }
+.mg-tb.mg-pick b { font-size: 16px; letter-spacing: .04em; }
+.mg-toast { position: absolute; left: 0; right: 0; margin: 0 auto; width: fit-content; bottom: calc(76px + var(--sab)); z-index: 5; max-width: 90%; padding: 10px 16px; border-radius: 999px; background: rgba(20,8,14,.94); border: 1px solid #c9952e; color: #ffe9a8; font-size: 14px; font-weight: 700; text-align: center; transform: translateY(12px); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+.mg-toast.on { opacity: 1; transform: none; }
+/* 話數清單：從底部滑上來的面板（蓋在閱讀器上，點外面收起） */
+.mg-sheet { position: absolute; inset: 0; z-index: 4; display: flex; flex-direction: column; justify-content: flex-end; background: rgba(0,0,0,.55); }
+.mg-sheet-box { display: flex; flex-direction: column; max-height: min(78%, 620px); padding-bottom: var(--sab); border-radius: 16px 16px 0 0; background: #1a1220; border-top: 2px solid #c9952e; animation: mgSheet .22s ease-out; }
+.mg-sheet-h { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 8px 8px 6px 16px; }
+.mg-sheet-h b { font-size: 17px; font-weight: 900; color: #ffe9b8; }
+.mg-sheet-h span { margin-left: 12px; font-size: 12.5px; color: #b9aaa4; }
+.mg-sheet-x { flex: none; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(255,255,255,.08); color: #ffe9a8; font-size: 18px; cursor: pointer; }
+.mg-sheet-list { overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 0 10px 10px; }
+.mg-row { width: 100%; min-height: 60px; display: flex; align-items: center; gap: 12px; margin-top: 6px; padding: 6px 12px 6px 6px; text-align: left; border: 1px solid #3a2a35; border-radius: 12px; background: #241826; color: inherit; font: inherit; cursor: pointer; }
+.mg-row.cur { border-color: #f2c44a; background: #3a1420; }
+.mg-row.locked { cursor: default; opacity: .62; }
+.mg-row-pic { flex: none; width: 40px; height: 48px; border-radius: 6px; overflow: hidden; background: #120a14; }
+.mg-row-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.mg-row.locked .mg-row-pic img { filter: blur(4px) brightness(.4); }
+.mg-row-t { flex: 1; min-width: 0; }
+.mg-row-t i { display: block; font-style: normal; font-size: 11.5px; font-weight: 900; letter-spacing: .12em; color: #f2c44a; }
+.mg-row-t b { display: block; font-size: 15px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mg-row-s { flex: none; font-size: 12.5px; font-weight: 700; color: #b9aaa4; white-space: nowrap; }
+.mg-row-s.new { padding: 2px 9px; border-radius: 6px; background: #e0283c; color: #fff; }
+@keyframes mgSheet { from { transform: translateY(40%); opacity: 0; } }
+.mg-frame { flex: 1; width: 100%; border: 0; background: #0b0710; }
+/* 遊戲中的「看漫畫」鈕：位置由 js/manga.js 的 refreshBtn 擺在機台外面的空帶上；樣子跟首頁的黃色標語框同一套（黃底、粗墨線、疊影） */
+.mg-fab { position: fixed; z-index: 30; display: flex; align-items: center; height: 46px; padding: 0 .95em; border: 3px solid #120003; border-radius: 6px; background: linear-gradient(#fff36e, #ffc400); color: #120003;
+  font: 900 18px/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; letter-spacing: .08em; white-space: nowrap; box-shadow: 4px 5px 0 rgba(18,0,3,.88); transform: skewX(-7deg); cursor: pointer; }
+.mg-fab:active { transform: skewX(-7deg) translate(2px, 3px); box-shadow: 2px 2px 0 rgba(18,0,3,.88); }
+.mg-fab i { display: none; position: absolute; right: -.65em; top: -.65em; width: 1.5em; height: 1.5em; border-radius: 50%; border: 2px solid #fff; background: #e60023; color: #fff; font-style: normal; font-size: .72em; letter-spacing: 0; align-items: center; justify-content: center; animation: mgFabNew 1s ease-in-out infinite; }
+.mg-fab.mg-fab-new i { display: flex; }
+.mg-fab.mg-fab-mini { padding: 0; aspect-ratio: 1; justify-content: center; border-radius: 50%; transform: none; }
+.mg-fab.mg-fab-mini:active { transform: translate(2px, 3px); }
+.mg-fab.mg-fab-mini span { font-size: 0; letter-spacing: 0; }
+.mg-fab.mg-fab-mini span::before { content: '漫'; font-size: 1.1rem; }
+.mg-fab.mg-fab-home { background: #1d0b12; color: #ffe9a8; border-color: #c9952e; box-shadow: 4px 5px 0 rgba(0,0,0,.7); }
+.mg-fab.mg-fab-home.mg-fab-mini span::before { content: '⌂'; font-size: 1.3rem; }
+@keyframes mgFabNew { 50% { transform: scale(1.18); } }
+/* 邊玩邊看：閱讀器靠右邊（寬螢幕）或上面（瘦長螢幕），位置與大小由 js/manga.js 的 Mg.dock 寫在元素上；分割線上有一個可以拖的把手 */
+.mg-overlay.mg-dock { inset: auto; box-shadow: 0 0 0 2px #c9952e, 0 0 26px rgba(0,0,0,.65); }
+.mg-grip { display: none; position: absolute; z-index: 3; touch-action: none; }
+.mg-dock .mg-grip { display: block; }
+.mg-dock-top .mg-grip { left: 50%; bottom: -26px; width: 140px; height: 26px; margin-left: -70px; cursor: ns-resize; }   /* 整個在閱讀器外面（機台最上緣），不擋工具列 */
+.mg-dock-right .mg-grip { top: 50%; left: -26px; width: 26px; height: 140px; margin-top: -70px; cursor: ew-resize; }
+.mg-grip::after { content: ''; position: absolute; left: 50%; top: 50%; width: 58px; height: 7px; margin: -3.5px 0 0 -29px; border-radius: 4px; background: #ffd21f; box-shadow: 0 0 0 2px #120003; }
+.mg-dock-right .mg-grip::after { width: 7px; height: 58px; margin: -29px 0 0 -3.5px; }
+.mg-dock-top .mg-tool { padding-bottom: 5px; }   /* 漫畫在上面：工具列下面就是機台，不用留底部橫條的位置 */
+.mg-dock-top .mg-toast { bottom: 70px; }
+.mg-dock-top .mg-sheet-box { padding-bottom: 0; max-height: 86%; }
+.mg-dock-right { padding-right: var(--sar); }
+.mg-dragging .mg-frame { pointer-events: none; }   /* 拖把手的時候別讓漫畫頁把滑鼠事件吃掉 */
