@@ -44,8 +44,12 @@
     // 機台上方留一整條給功能列（看漫畫、首頁、音樂、音效；js/manga.js 的 Mg.barH——進遊戲後才有，首頁與漫畫全螢幕時是 0）
     const barH = PK.Manga && PK.Manga.barH ? PK.Manga.barH() : 0; top += barH; sh -= barH;
     const s = Math.min(sw / MW, sh / MH);
-    M.scale.set(s); M.x = (sw - MW * s) / 2; M.y = top + (sh - MH * s) / 2;
-    const cs = getComputedStyle(safeProbe);
+    const cs = getComputedStyle(safeProbe), sT = parseFloat(cs.paddingTop) || 0, sB = parseFloat(cs.paddingBottom) || 0;
+    // 瘦長的螢幕（手機直立）：機台寬度頂到兩邊、上下會剩一截。機台下方接一條矮的操作列（js/dock.js：珠數、購買、漫畫進度、小旋鈕），
+    // 「功能列＋機台＋操作列」整組在安全區（避開動態島與底部橫條）裡上下置中；剩的空間不夠放操作列就照舊只把機台置中
+    const DOCK_H = 58, free = sh - MH * s, room = free - sT - sB - DOCK_H, dockOn = barH > 0 && !dk && room >= 6;
+    M.scale.set(s); M.x = (sw - MW * s) / 2; M.y = dockOn ? top + sT + room / 2 : top + free / 2;
+    PK.DockSpace = dockOn ? { x: M.x, w: MW * s, y: M.y + MH * s, h: DOCK_H } : null;
     VIEW.s = s; VIEW.x0 = -M.x / s; VIEW.y0 = -M.y / s; VIEW.w = app.screen.width / s; VIEW.h = app.screen.height / s; VIEW.ch = sh / s;
     VIEW.safeT = (parseFloat(cs.paddingTop) || 0) / s; VIEW.safeB = (parseFloat(cs.paddingBottom) || 0) / s;
     if (fit.after) fit.after();   // 背景與首頁跟著重排（它們比較晚才建立）
@@ -2207,7 +2211,7 @@
   M.addChild(cover);
   // 首頁：存檔與漫畫進度都讀好了才排版（漫畫解鎖、看完漫畫回來都會再排一次）
   if (PK.Manga) { PK.Manga.onCoverChange = layoutHome; PK.Manga.init().then(layoutHome); }
-  fit.after = () => { fitBackdrop(); layoutHome(); if (PK.Duel && PK.Duel.relayout) PK.Duel.relayout(); if (PK.Manga && PK.Manga.refreshBtn) PK.Manga.refreshBtn(); };   // 視窗大小、方向變了（或開發面板開關）：背景、首頁、對決畫面都重排
+  fit.after = () => { fitBackdrop(); layoutHome(); if (PK.Duel && PK.Duel.relayout) PK.Duel.relayout(); if (PK.Manga && PK.Manga.refreshBtn) PK.Manga.refreshBtn(); if (PK.Dock) PK.Dock.layout(); };   // 視窗大小、方向變了（或開發面板開關）：背景、首頁、對決畫面都重排
   layoutHome();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutHome);   // 字型晚到的話重畫一次
   PK.Dev.init();
@@ -2336,7 +2340,7 @@
   // 測試用：手動推進（視窗隱藏時 requestAnimationFrame 會暫停）
   PK.Machine = {
     simulate(sec) { const dt = 1 / 60; for (let t = 0; t < sec; t += dt) frame(dt); render(1 / 60, performance.now()); },
-    upper, lower, PAY, U, start, popOut, payout, owned, app, handle, toggleTrails, perf, layoutHome, showHome, hideHome, home, layoutLoad, showLoading, hideLoading, goHome,
+    upper, lower, PAY, U, start, setPower, popOut, payout, owned, app, handle, toggleTrails, perf, layoutHome, showHome, hideHome, home, layoutLoad, showLoading, hideLoading, goHome,
     rect() { const s = M.scale.x; return { x: M.x, y: M.y, w: MW * s, h: MH * s, r: 34 * s }; },   // 機台在螢幕上的範圍（CSS 像素）：投打對決的畫面只蓋這一塊
   };
 })();

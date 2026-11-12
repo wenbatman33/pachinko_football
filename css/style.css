@@ -204,3 +204,19 @@ button.mg-card:hover { transform: translateY(-3px); border-color: #f2c44a; }
 .mg-bar b { min-width: 1.5em; padding: .22em .3em; border-radius: 4px; background: #c8102e; color: #fff; text-align: center; letter-spacing: 0; }
 .mg-bar .off b { background: #4a3a3e; color: #b9a9a0; }
 .mg-bar.dim { opacity: .35; pointer-events: none; }
+
+/* 操作列（手機直立時機台下方，js/dock.js）：一條矮的橫列，樣式跟上方功能列一樣（黑底金線） */
+.pk-dock { position: fixed; z-index: 30; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 6px 10px; touch-action: none; user-select: none; -webkit-user-select: none;
+  background: linear-gradient(#120609, #24101a); border: 2px solid #c9952e; border-top: 0; border-radius: 0 0 12px 12px; color: #ffe9a8;
+  font: 900 14px/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; white-space: nowrap; }
+.pk-dock.dim { opacity: .35; pointer-events: none; }
+.pd-lab { font-size: 12px; color: #d9b98a; }
+.pd-balls { font-size: 20px; color: #ffd23f; min-width: 2.2em; }
+.pd-buy { height: 100%; padding: 0 .9em; border: 2px solid #7a5a22; border-radius: 7px; background: #2a121a; color: #ffe9a8; font: inherit; letter-spacing: .08em; }
+.pd-buy:active { transform: translateY(2px); }
+/* 力度條：--p＝0～1。底槽、金色的填滿段、圓形的滑塊；右邊越大力顏色越紅 */
+.pd-power { --p: 0; position: relative; flex: 1; min-width: 0; height: 100%; border: 2px solid #7a5a22; border-radius: 999px; background: #2a121a; overflow: hidden; touch-action: none; cursor: pointer; }
+.pd-power i { position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--h) / 2 + (100% - var(--h)) * var(--p)); background: linear-gradient(90deg, #3bff6e, #ffd23f 55%, #ff3355); background-size: calc(100% / max(var(--p), .05)) 100%; opacity: .85; }
+.pd-power u { position: absolute; top: 3px; bottom: 3px; aspect-ratio: 1; left: calc((100% - var(--h)) * var(--p) + 3px); border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, #e8d9b0 60%, #b58a2a); border: 2px solid #120003; box-shadow: 0 2px 0 rgba(0,0,0,.6); }
+.pd-power.on u { border-color: #fff; }
+.pd-power span { position: absolute; right: 14px; top: 0; bottom: 0; display: flex; align-items: center; font-size: 12px; color: rgba(255,233,168,.75); letter-spacing: .2em; pointer-events: none; }
