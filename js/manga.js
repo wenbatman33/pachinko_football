@@ -266,7 +266,7 @@
     var o = el('div', 'mg-overlay ' + cls); document.body.appendChild(o); Mg.overlay = o;
     document.body.classList.add('mg-open');
     if (wasDock) relayout();
-    if (Mg.btn) Mg.btn.style.display = Mg.homeBtn.style.display = 'none';   // 漫畫開著的時候收起機台外面的兩顆鈕
+       // 漫畫開著的時候收起機台外面的兩顆鈕
     return o;
   }
 
@@ -434,34 +434,42 @@
   // 遊戲中機台外面的兩顆鈕：「看漫畫」（黃色，主要）與「首頁」（深色，次要）。
   // 加到手機主畫面之後沒有瀏覽器的上一頁／重新整理，沒有「首頁」鈕就回不去標題畫面（新遊戲、漫畫櫃都在那裡）。
   // 位置：手機＝機台上方的空帶（首頁在左、看漫畫在右，避開瀏海）；寬螢幕＝機台右邊上下排；都沒有空帶＝機台左上、右上角的小圓鈕
+  // 功能列（2026-11-12 定案）：機台正上方一整條，跟機台一樣寬，四顆一樣大的鈕——看漫畫、首頁、音樂、音效。
+  // 音樂／音效是「點一下換一段」：关 → 小 → 中 → 大 → 关。有還沒讀的新話時「看漫画」右上角亮紅色的「新」。
+  // 機台會往下縮、讓出這一條的高度（js/machine.js 的 fit() 讀 Mg.barH）。沿革：機台外的兩顆鈕 → 一顆「菜单」鈕 → 機台右下的小圓鈕，都被嫌不好找。
+  var LV = ['关', '小', '中', '大'], BAR_H = 52;
+  function barOn() { var M = PK.Machine; return !!(Mg.started && Mg.state && M && M.rect && !(Mg.overlay && !Mg.dockOn)); }
+  Mg.barH = function () { return barOn() ? BAR_H : 0; };
+  Mg.hasUnread = function () { return !!(Mg.state && Mg.state.unlocked.some(function (n) { return Mg.state.read.indexOf(n) < 0; })); };
+  function barVol() {
+    var v = PK.VolumeUI ? PK.VolumeUI.get() : { bgm: 0, sfx: 0 };
+    Mg.bar.querySelector('.mb-bgm b').textContent = LV[v.bgm]; Mg.bar.querySelector('.mb-sfx b').textContent = LV[v.sfx];
+    Mg.bar.querySelector('.mb-bgm').classList.toggle('off', !v.bgm); Mg.bar.querySelector('.mb-sfx').classList.toggle('off', !v.sfx);
+  }
+  // 名稱沿用（原本是更新「看漫畫」鈕）：更新功能列的顯示、位置與紅點
   Mg.refreshBtn = function () {
-    var b = Mg.btn, h = Mg.homeBtn;
-    if (!b) {
-      b = Mg.btn = el('button', 'mg-fab', '<span>看漫画</span><i>新</i>'); b.title = '边玩边看漫画';
-      b.onclick = function () { if (PK.Audio && PK.Audio.unlock) PK.Audio.unlock(); Mg.openCurrent(); };
-      document.body.appendChild(b);
-      h = Mg.homeBtn = el('button', 'mg-fab mg-fab-home', '<span>首页</span>'); h.title = '回首页（进度会保留）';
-      h.onclick = function () { if (PK.Machine && PK.Machine.goHome) PK.Machine.goHome(); };
-      document.body.appendChild(h);
+    var bar = Mg.bar;
+    if (!bar) {
+      bar = Mg.bar = el('div', 'mg-bar', '<button class="mb-read"><span>看漫画</span><i>新</i></button><button class="mb-home"><span>首页</span></button>'
+        + '<button class="mb-bgm"><span>音乐</span><b></b></button><button class="mb-sfx"><span>音效</span><b></b></button>');
+      bar.style.display = 'none'; document.body.appendChild(bar);
+      bar.onclick = function (e) {
+        var t = e.target.closest('button'); if (!t) return;
+        if (PK.Audio && PK.Audio.unlock) PK.Audio.unlock();
+        if (t.classList.contains('mb-read')) Mg.openCurrent();
+        else if (t.classList.contains('mb-home')) { if (PK.Machine && PK.Machine.goHome) PK.Machine.goHome(); }
+        else if (PK.VolumeUI) { var k = t.classList.contains('mb-bgm') ? 'bgm' : 'sfx'; PK.VolumeUI.set(k, (PK.VolumeUI.get()[k] + 1) % 4); barVol(); }
+      };
     }
-    var M = PK.Machine, show = !!(Mg.started && Mg.state && !Mg.overlay && M && M.rect && !(PK.Duel && PK.Duel.active));
-    b.style.display = h.style.display = show ? '' : 'none'; if (!show) return;
-    var unread = Mg.state.unlocked.some(function (n) { return Mg.state.read.indexOf(n) < 0; });
-    b.classList.toggle('mg-fab-new', unread);
-    var r = M.rect(), W = window.innerWidth, bh = (PK.SPLIT && PK.SPLIT.btnH) || 46, st = b.style, hs = h.style;
-    st.height = hs.height = bh + 'px'; st.fontSize = hs.fontSize = Math.round(bh * 0.4) + 'px';
-    b.classList.remove('mg-fab-mini'); h.classList.remove('mg-fab-mini');
-    var bw = b.offsetWidth, hw = h.offsetWidth;
-    if (r.y >= bh + 14) {                        // 機台上面有空帶：首頁靠左、看漫畫靠右
-      var top = 'max(calc(var(--sat) + 6px), ' + Math.round((r.y - bh) / 2) + 'px)';   // --sat＝狀態列／瀏海的高度（css/style.css）
-      st.left = Math.round(Math.min(W - bw - 12, r.x + r.w - bw - 10)) + 'px'; st.top = top;
-      hs.left = Math.round(Math.max(12, r.x + 10)) + 'px'; hs.top = top;
-    } else if (W - (r.x + r.w) >= Math.max(bw, hw) + 26) {     // 機台右邊有空帶：上下排
-      st.left = hs.left = Math.round(r.x + r.w + 14) + 'px'; st.top = Math.round(r.y + 16) + 'px'; hs.top = Math.round(r.y + 16 + bh + 14) + 'px';
-    } else {                                     // 都沒有（例如直立的平板）：機台左上、右上角的小圓鈕
-      b.classList.add('mg-fab-mini'); h.classList.add('mg-fab-mini');
-      st.left = Math.round(r.x + r.w - bh - 8) + 'px'; st.top = hs.top = Math.round(r.y + 8) + 'px'; hs.left = Math.round(r.x + 8) + 'px';
-    }
+    var show = barOn(), was = bar.style.display !== 'none';
+    bar.style.display = show ? '' : 'none';
+    if (show !== was) { window.dispatchEvent(new Event('resize')); if (!show) return; }   // 出現或消失：請機台重新排位置（讓出／收回這一條）
+    if (!show) return;
+    var r = PK.Machine.rect(), duel = !!(PK.Duel && PK.Duel.active);
+    bar.style.left = Math.round(r.x) + 'px'; bar.style.width = Math.round(r.w) + 'px'; bar.style.top = Math.round(r.y - BAR_H) + 'px'; bar.style.height = BAR_H + 'px';
+    bar.classList.toggle('dim', duel);   // 點球對決中：功能列變暗、不能按
+    bar.querySelector('.mb-read').classList.toggle('new', Mg.hasUnread());
+    barVol();
   };
   // ---------- 拖分割把手、滾輪：都在整個視窗上聽 ----------
   Mg._drag = null;   // 正在拖把手的那個閱讀器

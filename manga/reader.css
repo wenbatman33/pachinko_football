@@ -50,7 +50,8 @@ body {
 .line.l { align-self: flex-start; align-items: flex-start; }
 .line.r { align-self: flex-end; align-items: flex-end; }
 .line.c { align-self: center; align-items: center; }
-.who { font-size: 12.5px; font-weight: 900; letter-spacing: .08em; margin: 0 14px 4px; color: var(--c, var(--gold2)); }
+/* 名牌：實心色塊＋深色字，一眼看得出是誰在說話（2026-11-12 使用者：「完全都分不清楚誰在對話」——原本只是對話框上方一行 12px 的彩色小字） */
+.who { font-size: clamp(14px, 3.8vw, 17px); font-weight: 900; letter-spacing: .06em; margin: 0 4px 7px; padding: 3px 14px 4px; border-radius: 999px; color: #14060a; background: var(--c, var(--gold2)); box-shadow: 2px 3px 0 rgba(0,0,0,.55); }
 .bubble { position: relative; padding: 11px 18px; border-radius: 22px; font-size: clamp(16px, 4.2vw, 19px); font-weight: 700; color: var(--ink); background: #fff;
   box-shadow: 0 3px 0 rgba(0,0,0,.35); border: 3px solid var(--ink); }
 /* 尾巴：after＝指向上一格；before＝指向下一格 */
@@ -91,3 +92,8 @@ a.next:hover { border-color: var(--gold2); }
 .tolib { display: inline-block; margin-top: 22px; color: var(--dim); text-decoration: none; font-size: 15px; }
 .tolib:hover { color: var(--gold2); }
 .foot { text-align: center; color: #6e5f66; font-size: 12.5px; padding: 30px 16px 60px; }
+
+/* 對話框的邊框與左（右）側色條用說話角色的代表色，同一個人連續說話時顏色一致、換人時一看就知道 */
+.say .bubble, .shout .bubble, .think .bubble { border-color: var(--c, #14060a); }
+.l .bubble { border-left-width: 9px; } .r .bubble { border-right-width: 9px; }
+.l .bubble::after, .r .bubble::after { border-left-width: 3px; }

@@ -31,3 +31,5 @@ manga/story_bible.md
 manga/manifest_*.json
 # 註：manga/ch01～ch05.html 是「佔位頁」（只會轉回遊戲首頁），要進版。
 # 真正的漫畫頁在 manga/r/<亂碼>.html，由 tools/build_manga.py 產生；不要把有內容的頁面放回這幾個檔名
+tools/.redo_*
+tools/redo_ids.json

@@ -8,8 +8,9 @@
   // 2026-11-11 以前每一話都能單獨開，網址又是照話數排的，沒解鎖也能直接看
   var ok = false;
   try { var PM = EMBED && window.parent !== window && window.parent.PK && window.parent.PK.Manga; ok = !!(PM && PM.isUnlocked && PM.isUnlocked(C.no)); } catch (e) { ok = false; }
+  if (window.MANGA_PREVIEW) ok = true;   // 製作時的審稿預覽頁（manga/preview/，不進版、不上線）：不用進遊戲也能看，版型跟正式閱讀頁完全一樣
   if (!ok) { try { window.top.location.replace(new URL('../../', location.href).href); } catch (e) { location.replace('../../'); } return; }
-  document.documentElement.classList.add('embed');
+  if (EMBED) document.documentElement.classList.add('embed');
   // 邊玩邊看的時候手指都在漫畫頁上，外面的遊戲收不到觸控；這段時間音樂被手機暫停（來電、通知音、切換 app…）的話沒有東西能把它叫回來。
   // 所以每一次點擊／放開都請遊戲對一次聲音（全螢幕看漫畫、聲音是故意暫停的時候，遊戲那邊不會動）
   ['pointerup', 'touchend', 'click'].forEach(function (t) {
@@ -33,7 +34,9 @@
     list.forEach(function (l) {
       if (l.type === 'nar') { var n = el('div', 'line nar'); n.appendChild(el('div', 'box', esc(l.text))); box.appendChild(n); return; }
       var ln = el('div', 'line ' + (l.side || 'l') + ' ' + l.type);
-      if (l.who) { var w = el('div', 'who', esc(l.who)); var c = colorOf(l.who); if (c) w.style.setProperty('--c', c); ln.appendChild(w); }
+      var c = colorOf(l.who); if (c) ln.style.setProperty('--c', c);
+      // 名牌＋對話框（2026-11-12 試過在每句前面放角色頭像，使用者：「我應該不用頭像來代表對話吧」→ 拿掉，靠名牌色塊與對話框的顏色分辨）
+      if (l.who) ln.appendChild(el('div', 'who', esc(l.who)));
       ln.appendChild(el('div', 'bubble', esc(l.text)));
       box.appendChild(ln);
     });

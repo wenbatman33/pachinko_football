@@ -173,7 +173,7 @@ button.mg-card:hover { transform: translateY(-3px); border-color: #f2c44a; }
 .mg-fab.mg-fab-mini { padding: 0; aspect-ratio: 1; justify-content: center; border-radius: 50%; transform: none; }
 .mg-fab.mg-fab-mini:active { transform: translate(2px, 3px); }
 .mg-fab.mg-fab-mini span { font-size: 0; letter-spacing: 0; }
-.mg-fab.mg-fab-mini span::before { content: '漫'; font-size: 1.1rem; }
+.mg-fab.mg-fab-mini span::before { content: '☰'; font-size: 1.2rem; }
 .mg-fab.mg-fab-home { background: #1d0b12; color: #ffe9a8; border-color: #c9952e; box-shadow: 4px 5px 0 rgba(0,0,0,.7); }
 .mg-fab.mg-fab-home.mg-fab-mini span::before { content: '⌂'; font-size: 1.3rem; }
 @keyframes mgFabNew { 50% { transform: scale(1.18); } }
@@ -190,3 +190,17 @@ button.mg-card:hover { transform: translateY(-3px); border-color: #f2c44a; }
 .mg-dock-top .mg-sheet-box { padding-bottom: 0; max-height: 86%; }
 .mg-dock-right { padding-right: var(--sar); }
 .mg-dragging .mg-frame { pointer-events: none; }   /* 拖把手的時候別讓漫畫頁把滑鼠事件吃掉 */
+
+/* 功能列：機台正上方一整條（看漫畫、首頁、音樂、音效），黑底金線，跟機台的黑金配色接在一起 */
+.mg-bar { position: fixed; z-index: 30; box-sizing: border-box; display: grid; grid-template-columns: 1.25fr 1fr 1fr 1fr; gap: 6px; padding: 6px 8px;
+  background: linear-gradient(#24101a, #120609); border: 2px solid #c9952e; border-bottom: 0; border-radius: 12px 12px 0 0;
+  font: 900 clamp(13px, 3.6vw, 17px)/1 "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; }
+.mg-bar button { position: relative; display: flex; align-items: center; justify-content: center; gap: .45em; min-width: 0; padding: 0 4px; border: 2px solid #7a5a22; border-radius: 7px;
+  background: #2a121a; color: #ffe9a8; font: inherit; letter-spacing: .06em; cursor: pointer; white-space: nowrap; }
+.mg-bar button:active { transform: translateY(2px); }
+.mg-bar .mb-read { background: linear-gradient(#fff36e, #ffc400); color: #120003; border-color: #120003; }
+.mg-bar .mb-read i { display: none; position: absolute; right: -5px; top: -7px; width: 1.5em; height: 1.5em; border-radius: 50%; border: 2px solid #fff; background: #e60023; color: #fff; font-style: normal; font-size: .76em; letter-spacing: 0; align-items: center; justify-content: center; animation: mgFabNew 1s ease-in-out infinite; }
+.mg-bar .mb-read.new i { display: flex; }
+.mg-bar b { min-width: 1.5em; padding: .22em .3em; border-radius: 4px; background: #c8102e; color: #fff; text-align: center; letter-spacing: 0; }
+.mg-bar .off b { background: #4a3a3e; color: #b9a9a0; }
+.mg-bar.dim { opacity: .35; pointer-events: none; }

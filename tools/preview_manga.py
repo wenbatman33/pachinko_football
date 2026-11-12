@@ -1,34 +1,38 @@
 #!/usr/bin/env python3
-# 審稿用的單頁預覽：把一話的每一格（縮小的圖＋格號＋對白旁白）排成一頁，直接用瀏覽器打開就能看，不用進遊戲。
-# 用法：python3 tools/preview_manga.py ch01 [ch02 ...] → manga/preview/chNN.html（圖放在 manga/preview/chNN/）
-# 這是給製作時審稿用的，不是上線的閱讀頁（上線的閱讀頁由 tools/build_manga.py 產生，只能在遊戲裡開）。
-import html, json, os, sys
+# 審稿用的預覽頁：不用進遊戲、直接用瀏覽器打開就能看一整話，版型跟正式閱讀頁完全一樣（共用 manga/reader.js、reader.css：
+# 左右對話框、角色名牌顏色、旁白框、狀聲詞疊在畫面上）。
+# 用法：python3 tools/preview_manga.py ch01 [ch02 ...] → manga/preview/chNN.html（縮小的圖放在 manga/preview/chNN/）
+# 這是製作時審稿用的，不進版、不上線（上線的閱讀頁由 tools/build_manga.py 產生，只能在遊戲裡開）。
+import json, os, sys
 from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-KIND = {'nar': '旁白', 'say': '', 'shout': '（大喊）', 'think': '（内心）'}
+HTML = '''<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PK大逆转</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../reader.css">
+</head>
+<body>
+<script>window.MANGA_PREVIEW = true; window.CHAPTER = %s;</script>
+<script src="../reader.js"></script>
+</body>
+</html>
+'''
 def build(cid):
     d = json.load(open(os.path.join(ROOT, 'manga', 'data', cid + '.json'), encoding='utf-8'))
     out = os.path.join(ROOT, 'manga', 'preview'); img_dir = os.path.join(out, cid); os.makedirs(img_dir, exist_ok=True)
-    rows = []
+    ch = {k: d[k] for k in ('id', 'no', 'title', 'free', 'next') if k in d}; ch['items'] = []; ch['hasNext'] = False
+    miss = 0
     for it in d['items']:
         raw = os.path.join(ROOT, d['out'], it['id'] + '.png'); jpg = os.path.join(img_dir, it['id'] + '.jpg')
         if os.path.exists(raw) and (not os.path.exists(jpg) or os.path.getmtime(jpg) < os.path.getmtime(raw)):
-            im = Image.open(raw).convert('RGB'); im.thumbnail((1100, 1100)); im.save(jpg, quality=82)
-        def line(l):
-            who = (l.get('who', '') + KIND[l['type']] + '：') if l['type'] != 'nar' else ''
-            return '<div class="l %s">%s%s</div>' % (l['type'], html.escape(who), html.escape(l['text']))
-        before = ''.join(line(l) for l in it['lines'] if l.get('at') == 'before')
-        after = ''.join(line(l) for l in it['lines'] if l.get('at', 'after') != 'before')
-        sfx = ''.join('<span class="s">%s</span>' % html.escape(s['text']) for s in it.get('sfx', []))
-        pic = '<img loading="lazy" src="%s/%s.jpg">' % (cid, it['id']) if os.path.exists(jpg) else '<div class="miss">（這一格還沒有圖）</div>'
-        rows.append('<section>%s%s%s</section>' % (before, pic, after))   # 使用者 2026-11-12：格號與狀聲詞標記都拿掉，只留畫面與對白
-    page = '''<!doctype html><html lang="zh-Hans"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>審稿預覽｜第%d話 %s</title><style>
-body{margin:0;background:#15131a;color:#eee;font:17px/1.6 "PingFang SC","Noto Sans SC",sans-serif}
-main{max-width:900px;margin:0 auto;padding:16px}h1{font-size:26px}section{margin:22px 0}
-img{width:100%%;display:block;border:3px solid #000;border-radius:4px}.l{padding:4px 10px;margin:4px 0;border-radius:6px;background:#26222e}
-.nar{background:#3a2f18;color:#ffe9b0}.shout{font-weight:900;color:#ff7a6a}.think{color:#b9c6ff;font-style:italic}
-.s{margin-left:10px;color:#ff5a4d;font-weight:900}.miss{padding:40px;text-align:center;background:#333}
-</style><main><h1>第%d話〈%s〉</h1>%s</main></html>''' % (d['no'], d['title'], d['no'], html.escape(d['title']), ''.join(rows))
-    p = os.path.join(out, cid + '.html'); open(p, 'w', encoding='utf-8').write(page); print(p)
+            im = Image.open(raw).convert('RGB'); im.thumbnail((1280, 1280)); im.save(jpg, quality=84)
+        if not os.path.exists(jpg): miss += 1; continue
+        p = {k: it[k] for k in ('id', 'size', 'lines', 'sfx') if k in it}; p['img'] = '%s/%s.jpg' % (cid, it['id']); ch['items'].append(p)
+    p = os.path.join(out, cid + '.html')
+    open(p, 'w', encoding='utf-8').write(HTML % json.dumps(ch, ensure_ascii=False).replace('</', '<\\/'))
+    print(p, '（%d 格%s）' % (len(ch['items']), '，還缺 %d 格' % miss if miss else ''))
 for c in sys.argv[1:] or ['ch01']: build(c)

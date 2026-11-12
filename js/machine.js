@@ -41,6 +41,8 @@
     // 邊玩邊看漫畫：閱讀器佔右邊（寬螢幕）或上面（瘦長螢幕），機台縮到剩下的那一塊繼續玩（位置與大小由 js/manga.js 的 dock 決定）
     const dk = PK.Manga && PK.Manga.dock ? PK.Manga.dock(sw, sh) : null;
     if (dk) { if (dk.side === 'right') sw -= dk.size; else { top = dk.size; sh -= dk.size; } }
+    // 機台上方留一整條給功能列（看漫畫、首頁、音樂、音效；js/manga.js 的 Mg.barH——進遊戲後才有，首頁與漫畫全螢幕時是 0）
+    const barH = PK.Manga && PK.Manga.barH ? PK.Manga.barH() : 0; top += barH; sh -= barH;
     const s = Math.min(sw / MW, sh / MH);
     M.scale.set(s); M.x = (sw - MW * s) / 2; M.y = top + (sh - MH * s) / 2;
     const cs = getComputedStyle(safeProbe);
@@ -1155,7 +1157,9 @@
     volG.clear();
     if (UNI) { const R0 = DX(DP.vol.r); volG.beginFill(0x000000, 0.3).drawCircle(0, 3, R0 + 3).endFill().beginFill(0xd8213b).drawCircle(0, 0, R0 + 2).endFill().lineStyle(2, 0xffd56a).drawCircle(0, 0, R0).lineStyle(0).beginFill(0xf4f4f6).drawCircle(0, 0, R0 - 4).endFill(); }   // 紅框白面圓鈕
 
-    speaker(volG, UNI ? -3 : -2, 0, UNI ? 0.68 : 1, off ? 0xd8213b : 0x7a0614, off ? 0 : Math.max(b, f));
+    // 菜單圖示：三條橫線；有還沒讀的新話時右上角一顆紅點
+    { const R1 = DX(DP.vol.r), lw = R1 * 0.2; volG.lineStyle(lw, 0x7a0614, 1, 0.5); [-1, 0, 1].forEach((k) => volG.moveTo(-R1 * 0.42, k * R1 * 0.34).lineTo(R1 * 0.42, k * R1 * 0.34)); volG.lineStyle(0);
+      if (PK.Manga && PK.Manga.hasUnread && PK.Manga.hasUnread()) volG.beginFill(0xffffff).drawCircle(R1 * 0.78, -R1 * 0.78, R1 * 0.4).endFill().beginFill(0xe60023).drawCircle(R1 * 0.78, -R1 * 0.78, R1 * 0.3).endFill(); }
     if (onVolDraw) onVolDraw();
   }
   drawVol();
@@ -1253,6 +1257,10 @@
   function openVol(v) { volLayer.visible = v == null ? !volLayer.visible : v; if (volLayer.visible) { M.addChild(volLayer); drawVolPanel(); } }
   volCatch.on('pointerdown', (e) => { e.stopPropagation(); openVol(false); });
   volBtn.on('pointerdown', (e) => { e.stopPropagation(); Au.unlock(); openVol(); });
+  // 2026-11-12 使用者：「看漫畫、首頁和音量不能整合成一個介面嗎」「一定只能在外面嗎，不能在主體內嗎」
+  // → 試過機台外的「菜单」鈕、機台右下的小圓鈕，使用者：「藏起來太奇怪，不能騰出一整條空間嗎」→ 定案：機台正上方一整條功能列（js/manga.js）
+  volBtn.visible = false; volBtn.eventMode = 'none';   // 機台上的圓鈕收起來：功能都在機台上方那一整條功能列
+  PK.VolumeUI = { get: () => ({ bgm: lvBgm(), sfx: lvSfx() }), set: (kind, lv) => { Au.unlock(); setLevel(kind, lv); }, redraw: () => drawVol() };
   // M 鍵：音樂與音效一起開／關
   let volMemo = null;
   function toggleAllSound() {
