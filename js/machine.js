@@ -43,12 +43,14 @@
     if (dk) { if (dk.side === 'right') sw -= dk.size; else { top = dk.size; sh -= dk.size; } }
     // 機台上方留一整條給功能列（看漫畫、首頁、音樂、音效；js/manga.js 的 Mg.barH——進遊戲後才有，首頁與漫畫全螢幕時是 0）
     const barH = PK.Manga && PK.Manga.barH ? PK.Manga.barH() : 0; top += barH; sh -= barH;
-    const s = Math.min(sw / MW, sh / MH);
     const cs = getComputedStyle(safeProbe), sT = parseFloat(cs.paddingTop) || 0, sB = parseFloat(cs.paddingBottom) || 0;
-    // 瘦長的螢幕（手機直立）：機台寬度頂到兩邊、上下會剩一截。機台下方接一條矮的操作列（js/dock.js：珠數、購買、漫畫進度、小旋鈕），
-    // 「功能列＋機台＋操作列」整組在安全區（避開動態島與底部橫條）裡上下置中；剩的空間不夠放操作列就照舊只把機台置中
-    const DOCK_H = 58, free = sh - MH * s, room = free - sT - sB - DOCK_H, dockOn = barH > 0 && !dk && room >= 6;
-    M.scale.set(s); M.x = (sw - MW * s) / 2; M.y = dockOn ? top + sT + room / 2 : top + free / 2;
+    // 直立的手機（寬不到 600、高超過寬的 1.5 倍）：機台下方一定有一條操作列（js/dock.js：珠數、購買、力度條）。
+    // 「功能列＋機台＋操作列」整組排在安全區（避開動態島與底部橫條／瀏覽器工具列）裡上下置中；高度不夠就把機台縮小一點，操作列不會消失。
+    // 第一版是「剩下的空間夠才顯示」：手機瀏覽器回報的上下安全區比預期大，算出來差幾個像素就整條不出現
+    // （2026-11-12 使用者手機上、連無痕模式都看不到力度條）
+    const DOCK_H = 58, phone = barH > 0 && !dk && sw < 600 && app.screen.height > sw * 1.5;
+    const availH = phone ? Math.max(200, sh - sT - sB - DOCK_H) : sh, s = Math.min(sw / MW, availH / MH), dockOn = phone;
+    M.scale.set(s); M.x = (sw - MW * s) / 2; M.y = dockOn ? top + sT + (availH - MH * s) / 2 : top + (sh - MH * s) / 2;
     PK.DockSpace = dockOn ? { x: M.x, w: MW * s, y: M.y + MH * s, h: DOCK_H } : null;
     VIEW.s = s; VIEW.x0 = -M.x / s; VIEW.y0 = -M.y / s; VIEW.w = app.screen.width / s; VIEW.h = app.screen.height / s; VIEW.ch = sh / s;
     VIEW.safeT = (parseFloat(cs.paddingTop) || 0) / s; VIEW.safeB = (parseFloat(cs.paddingBottom) || 0) / s;
