@@ -225,7 +225,7 @@
     for (var i = 0; i < n; i++) v.setUint8(44 + i, 128);
     return (SILENT = URL.createObjectURL(new Blob([v.buffer], { type: 'audio/wav' })));
   }
-  function isStream(group, key) { return !!PK.BGM_STREAM && !A.useElements && group === 'bgm' && key.indexOf('bgm_') === 0 && !A.noStream[key]; }
+  function isStream(group, key) { return !!PK.BGM_STREAM && !A.useElements && group === 'bgm' && key.indexOf('bgm_') === 0 && !A.noStream[key] && !(PK.BGM_DECODE && PK.BGM_DECODE.indexOf(key) >= 0); }
   A.noStream = {};
   A.load = function (group, file, key) {
     var url = path(group, file);
